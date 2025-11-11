@@ -1200,6 +1200,7 @@
 												<RichTextInput
 													bind:this={chatInputElement}
 													id="chat-input"
+													data-tour="chat-input"
 													onChange={(e) => {
 														prompt = e.md;
 														command = getCommand();
@@ -1436,6 +1437,7 @@
 										<div
 											id="input-menu-button"
 											class="bg-transparent hover:bg-gray-100 text-gray-700 dark:text-white dark:hover:bg-gray-800 rounded-full size-8 flex justify-center items-center outline-hidden focus:outline-hidden"
+											data-tour="input-menu"
 										>
 											<PlusAlt className="size-5.5" />
 										</div>

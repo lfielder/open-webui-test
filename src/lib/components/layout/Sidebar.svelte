@@ -1232,6 +1232,7 @@
 						>
 							<div
 								class=" flex items-center rounded-2xl py-2 px-1.5 w-full hover:bg-gray-100/50 dark:hover:bg-gray-900/50 transition"
+								data-tour="user-menu"
 							>
 								<div class=" self-center mr-3">
 									<img

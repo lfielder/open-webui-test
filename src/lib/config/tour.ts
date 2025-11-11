@@ -30,10 +30,34 @@ export const TOUR_STEPS: TourStep[] = [
 		placement: 'bottom'
 	},
 	{
+		id: 'chat-input',
+		title: 'Start a Conversation',
+		content:
+			'Type your message here to chat with AI models. Press Enter to send, or Shift+Enter for a new line. This is where all your conversations begin!',
+		target: '[data-tour="chat-input"]',
+		placement: 'top'
+	},
+	{
+		id: 'input-menu',
+		title: 'Input Options',
+		content:
+			'Click this button to access different input methods: upload files and documents, use voice input, capture images, and more. Enhance your conversations with rich media!',
+		target: '[data-tour="input-menu"]',
+		placement: 'right'
+	},
+	{
+		id: 'user-menu',
+		title: 'Settings & Profile',
+		content:
+			'Click your profile to access settings, manage your account, view shortcuts, and customize your Open WebUI experience. This is where you can personalize everything!',
+		target: '[data-tour="user-menu"]',
+		placement: 'right'
+	},
+	{
 		id: 'complete',
 		title: "You're All Set!",
 		content:
-			"You're ready to start chatting! Type your message in the input area below to begin a conversation. Explore the sidebar for settings, document uploads, and more features. Enjoy using Open WebUI!",
+			"You're ready to start chatting! Type your message in the input area to begin a conversation. Explore and discover more features as you go. Enjoy using Open WebUI!",
 		target: 'body',
 		placement: 'center'
 	}
