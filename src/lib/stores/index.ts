@@ -39,7 +39,7 @@ export const shortCodesToEmojis = writable(
 		}
 
 		return acc;
-	}, {})
+	}, {} as Record<string, string>)
 );
 
 export const TTSWorker = writable(null);

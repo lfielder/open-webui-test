@@ -51,6 +51,10 @@
 	import NotificationToast from '$lib/components/NotificationToast.svelte';
 	import AppSidebar from '$lib/components/app/AppSidebar.svelte';
 	import Spinner from '$lib/components/common/Spinner.svelte';
+	import TourOverlay from '$lib/components/tour/TourOverlay.svelte';
+	import TourResumePrompt from '$lib/components/tour/TourResumePrompt.svelte';
+	import { initTour } from '$lib/stores/tour';
+	import { TOUR_STEPS } from '$lib/config/tour';
 
 	// handle frontend updates (https://svelte.dev/docs/kit/configuration#version)
 	beforeNavigate(({ willUnload, to }) => {
@@ -696,6 +700,14 @@
 			loaded = true;
 		}
 
+		// Initialize tour for first-time users
+		if (loaded && $user) {
+			// Small delay to ensure DOM is fully rendered
+			setTimeout(() => {
+				initTour(TOUR_STEPS);
+			}, 100);
+		}
+
 		return () => {
 			window.removeEventListener('resize', onResize);
 		};
@@ -749,3 +761,8 @@
 	position="top-right"
 	closeButton
 />
+
+{#if loaded}
+	<TourResumePrompt />
+	<TourOverlay />
+{/if}
