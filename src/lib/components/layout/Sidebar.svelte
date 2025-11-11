@@ -562,7 +562,6 @@
 					>
 						<div class=" self-center flex items-center justify-center size-9">
 							<img
-								crossorigin="anonymous"
 								src="{WEBUI_BASE_URL}/static/favicon.png"
 								class="sidebar-new-chat-icon size-6 rounded-full group-hover:hidden"
 								alt=""
@@ -716,6 +715,7 @@
 	<div
 		bind:this={navElement}
 		id="sidebar"
+		data-tour="sidebar"
 		class="h-screen max-h-[100dvh] min-h-screen select-none {$showSidebar
 			? 'bg-gray-50 dark:bg-gray-950 z-50'
 			: ' bg-transparent z-0 '} {$isApp
@@ -740,7 +740,6 @@
 					on:click={newChatHandler}
 				>
 					<img
-						crossorigin="anonymous"
 						src="{WEBUI_BASE_URL}/static/favicon.png"
 						class="sidebar-new-chat-icon size-6 rounded-full"
 						alt=""
