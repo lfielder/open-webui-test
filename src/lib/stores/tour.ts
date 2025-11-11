@@ -1,4 +1,5 @@
 import { writable, derived, get, type Writable, type Readable } from 'svelte/store';
+import { showSidebar, mobile } from './index';
 
 // ============================================================================
 // Types and Interfaces
@@ -67,6 +68,66 @@ export const currentStep: Readable<TourStep | null> = derived(
 		return $tourSteps[$tourState.currentStepIndex] || null;
 	}
 );
+
+// ============================================================================
+// Element Visibility Helpers
+// ============================================================================
+
+/**
+ * Ensure an element is visible before showing its tour step
+ * Returns true if element is now visible, false if it cannot be made visible
+ */
+async function ensureElementVisible(selector: string): Promise<boolean> {
+	if (typeof window === 'undefined') return false;
+	
+	// Body is always visible
+	if (selector === 'body') return true;
+	
+	// Check if element already exists and is visible
+	let element = document.querySelector(selector);
+	if (element && isElementVisible(element as HTMLElement)) {
+		return true;
+	}
+	
+	// Handle sidebar - ensure it's open
+	if (selector === '[data-tour="sidebar"]') {
+		const isMobile = get(mobile);
+		if (!isMobile) {
+			showSidebar.set(true);
+			// Wait for sidebar to render
+			await new Promise(resolve => setTimeout(resolve, 300));
+			element = document.querySelector(selector);
+			return element !== null && isElementVisible(element as HTMLElement);
+		}
+		// On mobile, sidebar might not be suitable for tour
+		return false;
+	}
+	
+	// For other elements, wait a bit and check again
+	await new Promise(resolve => setTimeout(resolve, 100));
+	element = document.querySelector(selector);
+	return element !== null && isElementVisible(element as HTMLElement);
+}
+
+/**
+ * Check if an element is actually visible (not just in DOM)
+ */
+function isElementVisible(element: HTMLElement): boolean {
+	if (!element) return false;
+	
+	const style = window.getComputedStyle(element);
+	if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') {
+		return false;
+	}
+	
+	// Check if element has dimensions
+	const rect = element.getBoundingClientRect();
+	if (rect.width === 0 && rect.height === 0) {
+		return false;
+	}
+	
+	return true;
+}
 
 // ============================================================================
 // LocalStorage Helpers
@@ -192,7 +253,7 @@ export function initTour(steps: TourStep[]): void {
 /**
  * Start the tour from the beginning or resume from saved position
  */
-export function startTour(): void {
+export async function startTour(): Promise<void> {
 	const steps = get(tourSteps);
 	if (steps.length === 0) {
 		console.warn('Cannot start tour: no steps available');
@@ -202,7 +263,7 @@ export function startTour(): void {
 	const stored = loadTourState();
 	let startIndex = stored?.currentStep || 0;
 
-	// Find first valid step from startIndex (skip steps whose conditions aren't met)
+	// Find first valid step from startIndex (skip steps whose conditions aren't met or elements can't be made visible)
 	while (startIndex < steps.length) {
 		const step = steps[startIndex];
 		
@@ -219,6 +280,14 @@ export function startTour(): void {
 				startIndex++;
 				continue;
 			}
+		}
+		
+		// Ensure target element is visible
+		const isVisible = await ensureElementVisible(step.target);
+		if (!isVisible) {
+			console.log(`Skipping step ${step.id}: target element cannot be made visible (${step.target})`);
+			startIndex++;
+			continue;
 		}
 		
 		// Step is valid, break out of loop
@@ -261,7 +330,7 @@ export function startTour(): void {
 /**
  * Move to the next step in the tour
  */
-export function nextStep(): void {
+export async function nextStep(): Promise<void> {
 	const state = get(tourState);
 	const steps = get(tourSteps);
 
@@ -279,7 +348,7 @@ export function nextStep(): void {
 		}
 	}
 
-	// Find next valid step (skip steps whose conditions aren't met)
+	// Find next valid step (skip steps whose conditions aren't met or elements can't be made visible)
 	let nextIndex = state.currentStepIndex + 1;
 	while (nextIndex < steps.length) {
 		const nextStepData = steps[nextIndex];
@@ -297,6 +366,14 @@ export function nextStep(): void {
 				nextIndex++;
 				continue;
 			}
+		}
+		
+		// Ensure target element is visible
+		const isVisible = await ensureElementVisible(nextStepData.target);
+		if (!isVisible) {
+			console.log(`Skipping step ${nextStepData.id}: target element cannot be made visible (${nextStepData.target})`);
+			nextIndex++;
+			continue;
 		}
 		
 		// Step is valid, break out of loop
@@ -333,7 +410,7 @@ export function nextStep(): void {
 /**
  * Move to the previous step in the tour
  */
-export function previousStep(): void {
+export async function previousStep(): Promise<void> {
 	const state = get(tourState);
 
 	if (!state.isActive || state.currentStepIndex <= 0) {
@@ -342,7 +419,7 @@ export function previousStep(): void {
 
 	const steps = get(tourSteps);
 	
-	// Find previous valid step (skip steps whose conditions aren't met)
+	// Find previous valid step (skip steps whose conditions aren't met or elements can't be made visible)
 	let prevIndex = state.currentStepIndex - 1;
 	while (prevIndex >= 0) {
 		const prevStepData = steps[prevIndex];
@@ -360,6 +437,14 @@ export function previousStep(): void {
 				prevIndex--;
 				continue;
 			}
+		}
+		
+		// Ensure target element is visible
+		const isVisible = await ensureElementVisible(prevStepData.target);
+		if (!isVisible) {
+			console.log(`Skipping step ${prevStepData.id}: target element cannot be made visible (${prevStepData.target})`);
+			prevIndex--;
+			continue;
 		}
 		
 		// Step is valid, break out of loop
@@ -454,7 +539,7 @@ export function completeTour(): void {
 /**
  * Resume tour from saved position
  */
-export function resumeTour(): void {
+export async function resumeTour(): Promise<void> {
 	const stored = loadTourState();
 
 	if (!stored || stored.completed) {
@@ -471,7 +556,7 @@ export function resumeTour(): void {
 	// Validate saved step index
 	let resumeIndex = Math.min(stored.currentStep, steps.length - 1);
 
-	// Find first valid step from resumeIndex (skip steps whose conditions aren't met)
+	// Find first valid step from resumeIndex (skip steps whose conditions aren't met or elements can't be made visible)
 	while (resumeIndex < steps.length) {
 		const resumeStep = steps[resumeIndex];
 		
@@ -490,14 +575,12 @@ export function resumeTour(): void {
 			}
 		}
 		
-		// Check if target element exists for the resume step
-		if (resumeStep.target !== 'body') {
-			const targetElement = document.querySelector(resumeStep.target);
-			if (!targetElement) {
-				console.warn(`Resume step target element not found: ${resumeStep.target}`);
-				resumeIndex++;
-				continue;
-			}
+		// Ensure target element is visible
+		const isVisible = await ensureElementVisible(resumeStep.target);
+		if (!isVisible) {
+			console.log(`Skipping step ${resumeStep.id}: target element cannot be made visible (${resumeStep.target})`);
+			resumeIndex++;
+			continue;
 		}
 		
 		// Step is valid, break out of loop
@@ -507,7 +590,7 @@ export function resumeTour(): void {
 	// If no valid steps found, start from beginning
 	if (resumeIndex >= steps.length) {
 		console.warn('No valid resume step found, starting from beginning');
-		startTour();
+		await startTour();
 		return;
 	}
 

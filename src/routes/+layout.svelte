@@ -27,7 +27,8 @@
 		isApp,
 		appInfo,
 		toolServers,
-		playingNotificationSound
+		playingNotificationSound,
+		showSidebar
 	} from '$lib/stores';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
@@ -702,10 +703,14 @@
 
 		// Initialize tour for first-time users
 		if (loaded && $user) {
-			// Small delay to ensure DOM is fully rendered
+			// Delay to ensure DOM is fully rendered
 			setTimeout(() => {
+				// Ensure sidebar is visible for tour (on desktop)
+				if (!$mobile) {
+					showSidebar.set(true);
+				}
 				initTour(TOUR_STEPS);
-			}, 100);
+			}, 300);
 		}
 
 		return () => {
